@@ -11,23 +11,9 @@ import (
 )
 
 const (
-	smallest = 10000000000000
-	largest  = 99999999999999
+	// smallest = 10000000000000
+	largest = 99999999999999
 )
-
-// *    inp a - Read an input value and write it to variable a.
-// *    add a b - Add the value of a to the value of b, then store the result in variable a.
-// *    mul a b - Multiply the value of a by the value of b, then store the result in variable a.
-// *    div a b - Divide the value of a by the value of b, truncate the result to an integer, then
-//			store the result in variable a. (Here, "truncate" means to round the value toward zero.)
-// *    mod a b - Divide the value of a by the value of b, then store the remainder in variable a.
-//			(This is also called the modulo operation.)
-// *    eql a b - If the value of a and b are equal, then store the value 1 in variable a.
-//			Otherwise, store the value 0 in variable a.
-
-// (Program authors should be especially cautious; attempting to execute div with b=0 or attempting
-// to execute mod with a<0 or b<=0 will cause the program to crash and might even damage the ALU.
-// These operations are never intended in any serious ALU program.)
 
 const (
 	// Ops.
@@ -80,13 +66,13 @@ func (a acl) get(reg rune) int {
 	return 0 // Will never be reached.
 }
 
-func (a *acl) setNum(num int) {
-	a.num = num
-}
-
-func (a acl) getNum() int {
-	return a.num
-}
+// func (a *acl) setNum(num int) {
+// 	a.num = num
+// }
+//
+// func (a acl) getNum() int {
+// 	return a.num
+// }
 
 type op struct {
 	act rune
@@ -103,8 +89,6 @@ func (o op) String() string {
 	case rune:
 		str += fmt.Sprintf(" : %c", t)
 	}
-	if o.dat != nil {
-	}
 	return str
 }
 
@@ -120,6 +104,7 @@ func assertNotNil(i interface{}) {
 	}
 }
 
+//nolint:gomnd
 func parseInput() []op {
 	result := []op{}
 	for {
@@ -192,43 +177,91 @@ func numToDigs(num int) []int {
 	return result
 }
 
-// *    inp a - Read an input value and write it to variable a.
-// *    add a b - Add the value of a to the value of b, then store the result in variable a.
-// *    mul a b - Multiply the value of a by the value of b, then store the result in variable a.
-// *    div a b - Divide the value of a by the value of b, truncate the result to an integer, then
-//			store the result in variable a. (Here, "truncate" means to round the value toward zero.)
-// *    mod a b - Divide the value of a by the value of b, then store the remainder in variable a.
-//			(This is also called the modulo operation.)
-// *    eql a b - If the value of a and b are equal, then store the value 1 in variable a.
-//			Otherwise, store the value 0 in variable a.
-
-// (Program authors should be especially cautious; attempting to execute div with b=0 or attempting
-// to execute mod with a<0 or b<=0 will cause the program to crash and might even damage the ALU.
-// These operations are never intended in any serious ALU program.)
-
-func findNum(inState acl, ops []op, startDigs []int) (int, bool) {
+//nolint:funlen
+func findNum(inState acl, inReg rune, ops []op, startDigs []int) (int, bool) {
+	if inState.num%10 != 0 {
+		log.Fatal("read-in number modulo 10 not equal zero")
+	}
+DIGLOOP:
 	for dig := startDigs[0]; dig > 0; dig-- {
+		// Copy state.
 		state := inState
+		// Add my number to the correct input register.
+		state.set(inReg, dig)
 		for opIdx, op := range ops {
+			// Read out registers and optional payload.
+			reg := op.reg
+			regVal := state.get(reg)
+			var data int
+			switch d := op.dat.(type) {
+			case int:
+				data = d
+			case rune:
+				data = state.get(d)
+				// In other cases, this is the empty interface. Don't do anything.
+			}
+			// Process op.
 			switch op.act {
 			case opInp:
-				var val int
-				switch d := op.dat.(type) {
-				case rune:
-				case int:
-				default:
-					log.Fatal("unknown data type")
+				// inp a - Read an input value and write it to variable a.
+				// The writing to a register will happen in the next call.
+				state.num *= 10
+				num, valid := findNum(state, reg, ops[opIdx+1:], startDigs[1:])
+				if valid {
+					return num, true
 				}
-				state.set(op.reg, val)
+				// No valid number could be found for dig as our digit. Move on to the next one.
+				continue DIGLOOP
 			case opAdd:
+				// add a b - Add the value of a to the value of b, then store the result in
+				// variable a.
+				val := regVal + data
+				state.set(reg, val)
 			case opMul:
+				// mul a b - Multiply the value of a by the value of b, then store the result in
+				// variable a.
+				val := regVal * data
+				state.set(reg, val)
 			case opDiv:
+				// Cation when attempting to execute div with b=0. Such a case allows us to skip
+				// large swathes of numbers.
+				if data == 0 {
+					return 0, false
+				}
+				// div a b - Divide the value of a by the value of b, truncate the result to an
+				// integer, then store the result in variable a. (Here, "truncate" means to round
+				// the value toward zero.)
+				val := regVal / data // Go also rounds negative numbers towards zero here. Nice!
+				state.set(reg, val)
 			case opMod:
+				// Caution when attempting to execute mod with a<0 or b<=0.  Such a case allows us
+				// to skip large swathes of numbers.
+				if regVal < 0 || data <= 0 {
+					return 0, false
+				}
+				// mod a b - Divide the value of a by the value of b, then store the remainder in
+				// variable a. (This is also called the modulo operation.)
+				val := regVal % data
+				state.set(reg, val)
 			case opEql:
+				// eql a b - If the value of a and b are equal, then store the value 1 in variable
+				// a. Otherwise, store the value 0 in variable a.
+				if regVal == data {
+					state.set(reg, 1)
+				} else {
+					state.set(reg, 0)
+				}
 			default:
 				log.Fatal("unknown op")
 			}
 		}
+		// End, op loop.
+		// If we arrive here, we found a number, but only if the z register contains the value 0.
+		// Otherwise, this is no valid number.
+		if state.z == 0 {
+			return state.num + dig, true
+		}
+		return 0, false
 	}
 	return 0, false
 }
@@ -240,6 +273,10 @@ func main() {
 	}
 	startNum := largest
 	state := acl{} // Automatically zero initiated.
-	num, valid := findNum(state, ops, numToDigs(startNum))
+	if ops[0].act != opInp {
+		log.Fatal("need to start reading in")
+	}
+	startReg := ops[0].reg
+	num, valid := findNum(state, startReg, ops[1:], numToDigs(startNum))
 	fmt.Println(num, valid)
 }
