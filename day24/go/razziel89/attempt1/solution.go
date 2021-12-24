@@ -178,12 +178,35 @@ func numToDigs(num int) []int {
 }
 
 //nolint:funlen
-func findNum(inState acl, inReg rune, ops []op, startDigs []int) (int, bool) {
+func findNum(inState acl, inReg rune, ops []op, startDigs []int, level int) (int, bool) {
 	if inState.num%10 != 0 {
 		log.Fatal("read-in number modulo 10 not equal zero")
 	}
 DIGLOOP:
 	for dig := startDigs[0]; dig > 0; dig-- {
+		//nolint:gomnd
+		switch level {
+		case 1:
+			fmt.Printf("%d\n", dig)
+		case 2:
+			fmt.Printf(" %d\n", dig)
+		case 3:
+			fmt.Printf("  %d\n", dig)
+		case 4:
+			fmt.Printf("   %d\n", dig)
+		case 5:
+			fmt.Printf("    %d\n", dig)
+		case 6:
+			fmt.Printf("     %d\n", dig)
+			// case 7:
+			// 	fmt.Printf("      %d\n", dig)
+			// case 8:
+			// 	fmt.Printf("       %d\n", dig)
+			// case 9:
+			// 	fmt.Printf("        %d\n", dig)
+			// case 10:
+			// 	fmt.Printf("         %d\n", dig)
+		}
 		// Copy state.
 		state := inState
 		// Add my number to the correct input register.
@@ -206,7 +229,7 @@ DIGLOOP:
 				// inp a - Read an input value and write it to variable a.
 				// The writing to a register will happen in the next call.
 				state.num *= 10
-				num, valid := findNum(state, reg, ops[opIdx+1:], startDigs[1:])
+				num, valid := findNum(state, reg, ops[opIdx+1:], startDigs[1:], level+1)
 				if valid {
 					return num, true
 				}
@@ -277,6 +300,6 @@ func main() {
 		log.Fatal("need to start reading in")
 	}
 	startReg := ops[0].reg
-	num, valid := findNum(state, startReg, ops[1:], numToDigs(startNum))
+	num, valid := findNum(state, startReg, ops[1:], numToDigs(startNum), 1)
 	fmt.Println(num, valid)
 }
