@@ -249,6 +249,7 @@ DIGLOOP:
 				// Cation when attempting to execute div with b=0. Such a case allows us to skip
 				// large swathes of numbers.
 				if data == 0 {
+					fmt.Println("discard")
 					return 0, false
 				}
 				// div a b - Divide the value of a by the value of b, truncate the result to an
@@ -260,6 +261,7 @@ DIGLOOP:
 				// Caution when attempting to execute mod with a<0 or b<=0.  Such a case allows us
 				// to skip large swathes of numbers.
 				if regVal < 0 || data <= 0 {
+					fmt.Println("discard")
 					return 0, false
 				}
 				// mod a b - Divide the value of a by the value of b, then store the remainder in
