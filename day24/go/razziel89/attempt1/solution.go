@@ -11,8 +11,8 @@ import (
 )
 
 const (
-	// smallest = 10000000000000
-	largest = 99999999999999
+	smallest = 11111111111111
+	largest  = 99999999999999
 )
 
 const (
@@ -29,6 +29,7 @@ const (
 	yReg    = 'y'
 	zReg    = 'z'
 	allRegs = "wxyz"
+	last    = 14
 )
 
 type acl struct {
@@ -177,36 +178,29 @@ func numToDigs(num int) []int {
 	return result
 }
 
+type cacheElem struct {
+	state acl
+	inReg rune
+	level int
+}
+
+var cache = make(map[cacheElem]int)
+
 //nolint:funlen
 func findNum(inState acl, inReg rune, ops []op, startDigs []int, level int) (int, bool) {
 	if inState.num%10 != 0 {
 		log.Fatal("read-in number modulo 10 not equal zero")
 	}
+	cacheHit := cacheElem{
+		state: inState,
+		inReg: inReg,
+		level: level,
+	}
+	if val, hit := cache[cacheHit]; hit {
+		return val, val != 0
+	}
 DIGLOOP:
 	for dig := startDigs[0]; dig > 0; dig-- {
-		//nolint:gomnd
-		switch level {
-		case 1:
-			fmt.Printf("%d\n", dig)
-		case 2:
-			fmt.Printf(" %d\n", dig)
-		case 3:
-			fmt.Printf("  %d\n", dig)
-		case 4:
-			fmt.Printf("   %d\n", dig)
-		case 5:
-			fmt.Printf("    %d\n", dig)
-		case 6:
-			fmt.Printf("     %d\n", dig)
-			// case 7:
-			// 	fmt.Printf("      %d\n", dig)
-			// case 8:
-			// 	fmt.Printf("       %d\n", dig)
-			// case 9:
-			// 	fmt.Printf("        %d\n", dig)
-			// case 10:
-			// 	fmt.Printf("         %d\n", dig)
-		}
 		// Copy state.
 		state := inState
 		// Add my number to the correct input register.
@@ -231,6 +225,8 @@ DIGLOOP:
 				state.num *= 10
 				num, valid := findNum(state, reg, ops[opIdx+1:], startDigs[1:], level+1)
 				if valid {
+					fmt.Println(level, dig)
+					cache[cacheHit] = num
 					return num, true
 				}
 				// No valid number could be found for dig as our digit. Move on to the next one.
@@ -250,6 +246,7 @@ DIGLOOP:
 				// large swathes of numbers.
 				if data == 0 {
 					fmt.Println("discard")
+					cache[cacheHit] = 0
 					return 0, false
 				}
 				// div a b - Divide the value of a by the value of b, truncate the result to an
@@ -262,6 +259,7 @@ DIGLOOP:
 				// to skip large swathes of numbers.
 				if regVal < 0 || data <= 0 {
 					fmt.Println("discard")
+					cache[cacheHit] = 0
 					return 0, false
 				}
 				// mod a b - Divide the value of a by the value of b, then store the remainder in
@@ -283,11 +281,15 @@ DIGLOOP:
 		// End, op loop.
 		// If we arrive here, we found a number, but only if the z register contains the value 0.
 		// Otherwise, this is no valid number.
-		if state.z == 0 {
+		if level == last && state.z == 0 {
+			cache[cacheHit] = state.num
+			fmt.Println(level, dig)
 			return state.num + dig, true
 		}
+		cache[cacheHit] = 0
 		return 0, false
 	}
+	cache[cacheHit] = 0
 	return 0, false
 }
 
@@ -304,4 +306,6 @@ func main() {
 	startReg := ops[0].reg
 	num, valid := findNum(state, startReg, ops[1:], numToDigs(startNum), 1)
 	fmt.Println(num, valid)
+	_ = smallest
+	_ = largest
 }
