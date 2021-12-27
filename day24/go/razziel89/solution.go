@@ -6,6 +6,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 )
 
 const (
@@ -13,6 +14,8 @@ const (
 	largest = 99999999999999
 	last    = 13
 )
+
+var t = time.Now()
 
 type acl struct {
 	// w, x, y int
@@ -46,6 +49,7 @@ var funcs = []fn{fn01, fn02, fn03, fn04, fn05, fn06, fn07, fn08, fn09, fn10, fn1
 
 //nolint:gomnd
 func fn01(state acl, dig int) acl {
+	fmt.Println(1, dig)
 	return acl{
 		// w: dig,
 		// x: 1,
@@ -56,6 +60,7 @@ func fn01(state acl, dig int) acl {
 
 //nolint:gomnd
 func fn02(s acl, dig int) acl {
+	fmt.Println(2, dig)
 	return acl{
 		// w: dig,
 		// x: 1,
@@ -66,6 +71,7 @@ func fn02(s acl, dig int) acl {
 
 //nolint:gomnd
 func fn03(s acl, dig int) acl {
+	fmt.Println(3, dig)
 	return acl{
 		// w: dig,
 		// x: 1,
@@ -76,7 +82,9 @@ func fn03(s acl, dig int) acl {
 
 //nolint:gomnd
 func fn04(s acl, dig int) acl {
-	// fmt.Println(dig)
+	fmt.Println(time.Since(t))
+	t = time.Now()
+	fmt.Println(4, dig)
 	val := neq(s.z%26-9, dig)
 	return acl{
 		// w: dig,
@@ -208,16 +216,16 @@ func findNum(inState acl, startDigs *[]int, level int) (int, bool) {
 	for dig := (*startDigs)[level]; dig > 0; dig-- {
 		state := myFn(inState, dig)
 		if level == last {
-			if state.z != 0 {
-				return 0, false
+			if state.z == 0 {
+				fmt.Println("LAST", dig)
+				return dig, true
 			}
-			fmt.Println("LAST", dig)
-			return dig, true
-		}
-		num, valid := findNum(state, startDigs, level+1)
-		if valid {
-			fmt.Println(dig)
-			return pow10(last-level)*dig + num, true
+		} else {
+			num, valid := findNum(state, startDigs, level+1)
+			if valid {
+				fmt.Println(dig)
+				return pow10(last-level)*dig + num, true
+			}
 		}
 	}
 	return 0, false
