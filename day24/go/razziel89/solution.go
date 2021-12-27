@@ -6,16 +6,15 @@ import (
 	"os"
 	"strconv"
 	"strings"
-	"time"
 )
 
 const (
 	// smallest = 10000000000000
 	largest = 99999999999999
-	last    = 13
+	last    = 12
 )
 
-var t = time.Now()
+// var t = time.Now()
 
 type acl struct {
 	// w, x, y int
@@ -45,7 +44,22 @@ func neq(a, b int) int {
 
 type fn = func(acl, int) acl
 
-var funcs = []fn{fn01, fn02, fn03, fn04, fn05, fn06, fn07, fn08, fn09, fn10, fn11, fn12, fn13, fn14}
+var funcs = []fn{
+	fn01,
+	fn02,
+	fn03,
+	fn04,
+	fn05,
+	fn06,
+	fn07,
+	fn08,
+	fn09,
+	fn10,
+	fn11,
+	fn12,
+	fn13,
+	// fn14,
+}
 
 //nolint:gomnd
 func fn01(state acl, dig int) acl {
@@ -71,6 +85,8 @@ func fn02(s acl, dig int) acl {
 
 //nolint:gomnd
 func fn03(s acl, dig int) acl {
+	// fmt.Println(time.Since(t))
+	// t = time.Now()
 	fmt.Println(3, dig)
 	return acl{
 		// w: dig,
@@ -82,9 +98,6 @@ func fn03(s acl, dig int) acl {
 
 //nolint:gomnd
 func fn04(s acl, dig int) acl {
-	fmt.Println(time.Since(t))
-	t = time.Now()
-	fmt.Println(4, dig)
 	val := neq(s.z%26-9, dig)
 	return acl{
 		// w: dig,
@@ -111,7 +124,7 @@ func fn06(s acl, dig int) acl {
 		// w: dig,
 		// x: 1,
 		// y: dig + 6,
-		z: 26 * s.z * (dig + 6),
+		z: 26*s.z + dig + 6,
 	}
 }
 
@@ -189,16 +202,16 @@ func fn13(s acl, dig int) acl {
 	}
 }
 
-//nolint:gomnd
-func fn14(s acl, dig int) acl {
-	val := neq(s.z%26-3, dig)
-	return acl{
-		// w: dig,
-		// x: val,
-		// y: (dig + 12) * val,
-		z: s.z/26*(25*val+1) + (dig+12)*val,
-	}
-}
+// //nolint:gomnd
+// func fn14(s acl, dig int) acl {
+// 	val := neq(s.z%26-3, dig)
+// 	return acl{
+// 		// w: dig,
+// 		// x: val,
+// 		// y: (dig + 12) * val,
+// 		z: s.z/26*(25*val+1) + (dig+12)*val,
+// 	}
+// }
 
 const ten = 10
 
@@ -210,13 +223,13 @@ func pow10(exp int) int {
 	return result
 }
 
-//nolint:funlen
+//nolint:funlen,gomnd
 func findNum(inState acl, startDigs *[]int, level int) (int, bool) {
 	myFn := funcs[level]
 	for dig := (*startDigs)[level]; dig > 0; dig-- {
 		state := myFn(inState, dig)
 		if level == last {
-			if state.z == 0 {
+			if 0 <= state.z && state.z < 26 {
 				fmt.Println("LAST", dig)
 				return dig, true
 			}

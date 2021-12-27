@@ -11,7 +11,7 @@ run 5 &
 echo $!
 run 3 &
 echo $!
-run 1 &
-echo $!
+# run 1 &
+# echo $!
 
 wait
