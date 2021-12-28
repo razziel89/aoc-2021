@@ -200,7 +200,13 @@ func findNum(inState acl, inReg rune, ops []op, startDigs []int, level int) (int
 		return val, val != 0
 	}
 DIGLOOP:
-	for dig := startDigs[0]; dig > 0; dig-- {
+	for dig := startDigs[0]; dig <= 9; dig++ {
+		if level == 1 {
+			fmt.Println(level, dig)
+			if dig > 3 { //nolint:gomnd
+				break
+			}
+		}
 		// Copy state.
 		state := inState
 		// Add my number to the correct input register.
@@ -226,7 +232,7 @@ DIGLOOP:
 				num, valid := findNum(state, reg, ops[opIdx+1:], startDigs[1:], level+1)
 				if valid {
 					fmt.Println(level, dig)
-					cache[cacheHit] = num
+					cache[cacheHit] = 1
 					return num, true
 				}
 				// No valid number could be found for dig as our digit. Move on to the next one.
@@ -281,10 +287,15 @@ DIGLOOP:
 		// End, op loop.
 		// If we arrive here, we found a number, but only if the z register contains the value 0.
 		// Otherwise, this is no valid number.
-		if level == last && state.z == 0 {
-			cache[cacheHit] = state.num
-			fmt.Println(level, dig)
-			return state.num + dig, true
+		if level == last {
+			if state.z == 0 {
+				cache[cacheHit] = 1
+				fmt.Println(level, dig)
+				return state.num + dig, true
+			}
+		}
+		if level != last {
+			log.Fatal("should never reach here", level)
 		}
 		cache[cacheHit] = 0
 		return 0, false
@@ -298,7 +309,7 @@ func main() {
 	for _, o := range ops {
 		fmt.Println(o)
 	}
-	startNum := largest
+	startNum := smallest
 	state := acl{} // Automatically zero initiated.
 	if ops[0].act != opInp {
 		log.Fatal("need to start reading in")

@@ -11,7 +11,7 @@ import (
 const (
 	// smallest = 10000000000000
 	largest = 99999999999999
-	last    = 12
+	last    = 13
 )
 
 // var t = time.Now()
@@ -58,12 +58,12 @@ var funcs = []fn{
 	fn11,
 	fn12,
 	fn13,
-	// fn14,
+	fn14,
 }
 
 //nolint:gomnd
 func fn01(state acl, dig int) acl {
-	fmt.Println(1, dig)
+	// fmt.Println(1, dig)
 	return acl{
 		// w: dig,
 		// x: 1,
@@ -74,7 +74,7 @@ func fn01(state acl, dig int) acl {
 
 //nolint:gomnd
 func fn02(s acl, dig int) acl {
-	fmt.Println(2, dig)
+	// fmt.Println(2, dig)
 	return acl{
 		// w: dig,
 		// x: 1,
@@ -87,7 +87,7 @@ func fn02(s acl, dig int) acl {
 func fn03(s acl, dig int) acl {
 	// fmt.Println(time.Since(t))
 	// t = time.Now()
-	fmt.Println(3, dig)
+	// fmt.Println(3, dig)
 	return acl{
 		// w: dig,
 		// x: 1,
@@ -202,16 +202,16 @@ func fn13(s acl, dig int) acl {
 	}
 }
 
-// //nolint:gomnd
-// func fn14(s acl, dig int) acl {
-// 	val := neq(s.z%26-3, dig)
-// 	return acl{
-// 		// w: dig,
-// 		// x: val,
-// 		// y: (dig + 12) * val,
-// 		z: s.z/26*(25*val+1) + (dig+12)*val,
-// 	}
-// }
+//nolint:gomnd
+func fn14(s acl, dig int) acl {
+	val := neq(s.z%26-3, dig)
+	return acl{
+		// w: dig,
+		// x: val,
+		// y: (dig + 12) * val,
+		z: s.z/26*(25*val+1) + (dig+12)*val,
+	}
+}
 
 const ten = 10
 
@@ -223,24 +223,41 @@ func pow10(exp int) int {
 	return result
 }
 
+type cacheElem struct {
+	state acl
+	level int
+}
+
+var cache = make(map[cacheElem]int)
+
 //nolint:funlen,gomnd
 func findNum(inState acl, startDigs *[]int, level int) (int, bool) {
+	cacheHit := cacheElem{
+		state: inState,
+		level: level,
+	}
+	if val, hit := cache[cacheHit]; hit {
+		return val, val != 0
+	}
 	myFn := funcs[level]
 	for dig := (*startDigs)[level]; dig > 0; dig-- {
 		state := myFn(inState, dig)
 		if level == last {
-			if 0 <= state.z && state.z < 26 {
+			if state.z == 0 {
 				fmt.Println("LAST", dig)
+				cache[cacheHit] = dig
 				return dig, true
 			}
 		} else {
 			num, valid := findNum(state, startDigs, level+1)
 			if valid {
 				fmt.Println(dig)
+				cache[cacheHit] = dig
 				return pow10(last-level)*dig + num, true
 			}
 		}
 	}
+	cache[cacheHit] = 0
 	return 0, false
 }
 
