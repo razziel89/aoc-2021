@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"os"
 )
 
 // tag::solution[]
@@ -54,22 +55,25 @@ func step(image []rune, lineLen int) ([]rune, bool) {
 }
 
 func main() {
+	prettyPrint := os.Getenv("PRETTY_PRINT") == "1"
+
 	image, lineLen, err := ReadLinesAsImage()
 	if err != nil {
 		log.Fatal(err.Error())
 	}
 
 	count := 0
-	fmt.Println(count)
-	// pretty(image, lineLen)
+	if prettyPrint {
+		pretty(image, lineLen)
+	}
 	for moved := true; moved; {
 		count++
 		image, moved = step(image, lineLen)
-		fmt.Println(count)
-		// pretty(image, lineLen)
+		if prettyPrint {
+			pretty(image, lineLen)
+		}
 	}
-	fmt.Println(count)
-	_ = pretty
+	fmt.Println("Cucumbers stop moving after", count, "steps.")
 }
 
 // end::solution[]
