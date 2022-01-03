@@ -2,6 +2,8 @@ package main
 
 import "fmt"
 
+// tag::ops[]
+
 const (
 	// Ops.
 	opInp = 'i'
@@ -175,3 +177,5 @@ func opsToFuncs(ops []op) ([]fn, error) {
 
 	return funcs, nil
 }
+
+// end::ops[]

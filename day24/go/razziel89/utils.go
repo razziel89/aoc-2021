@@ -9,6 +9,7 @@ import (
 	"strings"
 )
 
+// tag::utils[]
 const (
 	// Registers.
 	allRegs = "wxyz"
@@ -96,3 +97,5 @@ func ReadLinesAsOps() ([]op, error) {
 		result = append(result, o)
 	}
 }
+
+// end::utils[]

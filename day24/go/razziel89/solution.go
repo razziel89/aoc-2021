@@ -5,6 +5,8 @@ import (
 	"log"
 )
 
+// tag::solution[]
+
 const (
 	// Digits and levels for the brute-force search.
 	smallestDigit = 1
@@ -78,8 +80,10 @@ func main() {
 	if err != nil {
 		log.Fatal(err.Error())
 	}
+
 	// Initialise the cache.
 	cache = make(map[cacheElem]int)
+
 	// Part 1, largest accepted model number.
 	state := acl{} // Automatically zero-initialised.
 	num, valid := findNum(state, largestDigit, smallestDigit, -1, firstLevel)
@@ -87,8 +91,10 @@ func main() {
 		log.Fatal("no solution found")
 	}
 	fmt.Println("Largest model number is", num, "- cached", len(cache), "function calls")
+
 	// Clear the cache in between.
 	cache = make(map[cacheElem]int)
+
 	// Part 2, smallest accepted model number.
 	state = acl{}
 	num, valid = findNum(state, smallestDigit, largestDigit, 1, firstLevel)
@@ -97,3 +103,5 @@ func main() {
 	}
 	fmt.Println("Smallest model number is", num, "- cached", len(cache), "function calls")
 }
+
+// end::solution[]
