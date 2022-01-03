@@ -3,36 +3,18 @@ package main
 import (
 	"fmt"
 	"log"
-	"os"
-	"strconv"
-	"strings"
 )
 
 const (
-	// smallest = 10000000000000
-	largest = 99999999999999
-	last    = 13
+	smallestDigit = 1
+	largestDigit  = 9
+	firstLevel    = 0
+	lastLevel     = 13
 )
-
-// var t = time.Now()
 
 type acl struct {
 	// w, x, y int
 	z int
-}
-
-func numToDigs(num int) []int {
-	str := fmt.Sprint(num)
-	result := []int{}
-	for _, digAsStr := range strings.Split(str, "") {
-		dig, err := strconv.Atoi(digAsStr)
-		if err != nil {
-			log.Fatal("internal error")
-		}
-		result = append(result, dig)
-	}
-	fmt.Println(num, result)
-	return result
 }
 
 func neq(a, b int) int {
@@ -228,10 +210,9 @@ type cacheElem struct {
 	level int
 }
 
-var cache = make(map[cacheElem]int)
+var cache map[cacheElem]int
 
-//nolint:funlen,gomnd
-func findNum(inState acl, startDigs *[]int, level int) (int, bool) {
+func findNum(inState acl, startDig, endDig, increment, level int) (int, bool) {
 	cacheHit := cacheElem{
 		state: inState,
 		level: level,
@@ -240,20 +221,18 @@ func findNum(inState acl, startDigs *[]int, level int) (int, bool) {
 		return val, val != 0
 	}
 	myFn := funcs[level]
-	for dig := (*startDigs)[level]; dig > 0; dig-- {
+	for dig := startDig; dig != endDig+increment; dig += increment {
 		state := myFn(inState, dig)
-		if level == last {
+		if level == lastLevel {
 			if state.z == 0 {
-				fmt.Println("LAST", dig)
 				cache[cacheHit] = dig
 				return dig, true
 			}
 		} else {
-			num, valid := findNum(state, startDigs, level+1)
+			num, valid := findNum(state, startDig, endDig, increment, level+1)
 			if valid {
-				fmt.Println(dig)
 				cache[cacheHit] = dig
-				return pow10(last-level)*dig + num, true
+				return pow10(lastLevel-level)*dig + num, true
 			}
 		}
 	}
@@ -262,14 +241,22 @@ func findNum(inState acl, startDigs *[]int, level int) (int, bool) {
 }
 
 func main() {
-	myFirstDig, err := strconv.Atoi(os.Getenv("MY_FIRST_DIG"))
-	if err != nil {
-		log.Fatal("MY_FIRST_DIG not set")
+	// Initialise the cache.
+	cache = make(map[cacheElem]int)
+	// Part 1, largest accepted model number.
+	state := acl{} // Automatically zero-initialised.
+	num, valid := findNum(state, largestDigit, smallestDigit, -1, firstLevel)
+	if !valid {
+		log.Fatal("no solution found")
 	}
-	digs := numToDigs(largest)
-	digs[0] = myFirstDig
-	fmt.Println(digs)
-	state := acl{}
-	num, valid := findNum(state, &digs, 0)
-	fmt.Println(num, valid)
+	fmt.Println("Largest model number is", num, "- cached", len(cache), "function calls")
+	// Clear the cache in between.
+	cache = make(map[cacheElem]int)
+	// Part 2, smallest accepted model number.
+	state = acl{}
+	num, valid = findNum(state, smallestDigit, largestDigit, 1, firstLevel)
+	if !valid {
+		log.Fatal("no solution found")
+	}
+	fmt.Println("Smallest model number is", num, "- cached ", len(cache), "function calls")
 }
